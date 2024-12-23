@@ -19,9 +19,7 @@ if uploaded_file is not None:
     st.subheader("Dataset Overview")
     st.write(df.head())
 
-    # Show some basic statistics about the dataset
-    st.subheader("Basic Statistics")
-    st.write(df.describe())
+   
 
     # Visualizing the data
     st.subheader("Visualize Data")
