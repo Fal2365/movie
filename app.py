@@ -1,47 +1,61 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
 
-# Load data from CSV
-@st.cache_data
-def load_data():
-    return pd.read_csv('indian_movie_data_final.csv')
+# Title of the app
+st.title('Movie Performance Analysis')
 
-# Load the dataset
-data = load_data()
+# Sidebar for uploading the data
+st.sidebar.header("Upload Data")
+uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type=["csv"])
 
-# App Title
-st.title("Indian Movie Analysis")
+if uploaded_file is not None:
+    # Load the data
+    df = pd.read_csv(uploaded_file)
 
-# Sidebar filters
-st.sidebar.header("Filters")
-selected_genre = st.sidebar.selectbox("Select Genre", ["All"] + list(data['Genre'].unique()))
-selected_language = st.sidebar.selectbox("Select Language", ["All"] + list(data['Language'].unique()))
+    # Display dataset
+    st.subheader("Dataset Overview")
+    st.write(df.head())
 
-# Filter data based on selection
-filtered_data = data.copy()
-if selected_genre != "All":
-    filtered_data = filtered_data[filtered_data['Genre'] == selected_genre]
-if selected_language != "All":
-    filtered_data = filtered_data[filtered_data['Language'] == selected_language]
+    # Show some basic statistics about the dataset
+    st.subheader("Basic Statistics")
+    st.write(df.describe())
 
-# Display filtered data
-st.write("### Movie Data Table")
-st.dataframe(filtered_data)
+    # Visualizing the data
+    st.subheader("Visualize Data")
 
-# Visualization: Bar chart of budget
-st.write("### Budget Comparison (in ₹ Crores)")
-st.bar_chart(filtered_data.set_index('Movie Title')['Budget (in crore ₹)'])
+    # Rating vs Budget scatter plot
+    st.write("Budget vs Rating")
+    fig = px.scatter(df, x="budget", y="rating", title="Budget vs Rating")
+    st.plotly_chart(fig)
 
-# Hit or Flop Analysis
-st.write("### Hit or Flop Distribution")
-st.bar_chart(filtered_data['Hit or Flop'].value_counts())
+    # Box plot of rating distribution by genre
+    st.write("Rating by Genre (Box Plot)")
+    fig, ax = plt.subplots(figsize=(8, 5))
+    sns.boxplot(x='genre', y='rating', data=df, ax=ax)
+    ax.set_title('Rating Distribution by Genre')
+    st.pyplot(fig)
 
-# Additional Information
-st.write("### Insights")
-st.markdown("- **High Budget Movies** are not always hits.")
-st.markdown("- Genre and Language can influence the movie's success.")
+    # Rating trend over years (Line plot)
+    st.write("Rating Trend Over Years (Line Plot)")
+    rating_trend = df.groupby('year')['rating'].mean().reset_index()
+    fig, ax = plt.subplots(figsize=(8, 5))
+    sns.lineplot(x='year', y='rating', data=rating_trend, ax=ax)
+    ax.set_title('Rating Trend Over Years')
+    st.pyplot(fig)
 
-# Create requirements.txt
-requirements = """\nstreamlit\npandas\n"""
-with open('requirements.txt', 'w') as f:
-    f.write(requirements)
+    # Display some specific analysis
+    st.subheader("Advanced Analysis")
+
+    # Filter movies by rating
+    rating_threshold = st.slider("Select Rating Threshold", min_value=0, max_value=10, value=5)
+    filtered_movies = df[df['rating'] > rating_threshold]
+    st.write(f"Movies with rating greater than {rating_threshold}:", filtered_movies)
+
+    # Additional analysis could be added here based on the data, such as clustering, regression models, etc.
+
+else:
+    st.warning("Please upload a CSV file to begin analysis.")
+
